@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>编辑 HTML · 本机 HTML 资料库</title>
+<style>
+:root{--paper:#f6f5f0;--surface:#fffefa;--ink:#202f30;--muted:#62716d;--line:#d9dfd9;--action:#186358;--action-soft:#e7f0e9;--warning:#855218;--warning-soft:#f6ecdf;--danger:#a33535;--danger-soft:#f7e6e4;--focus:#3478a4;--white:#fff;--canvas:#e9ebe6;--s1:.25rem;--s2:.5rem;--s3:.75rem;--s4:1rem;--s5:1.5rem;--xs:.75rem;--sm:.875rem;--base:1rem;--lg:1.2rem;--normal:400;--strong:650;--leading:1.6;--tight:1.15;--radius:.65rem;--radius-small:.4rem;--border:1px;--outline:2px;--focus-width:3px;--focus-offset:3px;--shadow:0 8px 32px #233a2b14;--tap:40px;--side:23rem;--header:auto;--frame-tablet:768px;--frame-phone:390px;--thumb:9rem;--log:14rem;--snippet:12rem;--overlay:#fffefae6;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;--code:ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:var(--normal) var(--sm)/var(--leading) var(--sans);display:flex;flex-direction:column;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{min-height:var(--tap);border:var(--border) solid var(--line);border-radius:var(--radius-small);background:var(--surface);padding:0 var(--s3);cursor:pointer}
+button:hover:not(:disabled){border-color:var(--action)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--action);border-color:var(--action);color:var(--white)}
+button.danger{color:var(--danger)}
+button[aria-pressed="true"]{background:var(--action-soft);border-color:var(--action);color:var(--action);font-weight:var(--strong)}
+:focus-visible{outline:var(--focus-width) solid var(--focus);outline-offset:var(--focus-offset)}
+input,select,textarea{width:100%;min-height:var(--tap);border:var(--border) solid var(--line);border-radius:var(--radius-small);background:var(--white);padding:var(--s1) var(--s2)}
+textarea{min-height:5.5rem;resize:vertical;line-height:var(--leading)}
+a{color:var(--action)}
+[hidden]{display:none!important}
+.topbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) var(--s3);padding:var(--s2) var(--s4);background:var(--surface);border-bottom:var(--border) solid var(--line)}
+.back{text-decoration:none;font-weight:var(--strong);white-space:nowrap}
+.doc-title{flex:1 1 12rem;min-width:0;margin:0;font-size:var(--base);line-height:var(--tight);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.status{padding:var(--s1) var(--s2);border-radius:var(--radius-small);background:var(--action-soft);color:var(--action);font-size:var(--xs);white-space:nowrap}
+.status[data-tone="dirty"]{background:var(--warning-soft);color:var(--warning)}
+.status[data-tone="error"]{background:var(--danger-soft);color:var(--danger)}
+.group{display:flex;flex-wrap:wrap;gap:var(--s1);align-items:center}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2);padding:var(--s2) var(--s4);background:var(--surface);border-bottom:var(--border) solid var(--line)}
+.toolbar button{min-width:var(--tap);padding:0 var(--s2)}
+.toolbar .sep{width:var(--border);align-self:stretch;background:var(--line)}
+.toolbar select{width:auto}
+.color-tool{display:inline-flex;align-items:center;gap:var(--s1);font-size:var(--xs);color:var(--muted)}
+.color-tool input{width:var(--tap);padding:var(--s1)}
+.notice{margin:0;padding:var(--s2) var(--s4);background:var(--warning-soft);color:var(--warning);border-bottom:var(--border) solid var(--line)}
+.notice[data-tone="error"]{background:var(--danger-soft);color:var(--danger)}
+.notice[data-tone="ok"]{background:var(--action-soft);color:var(--action)}
+.workspace{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) var(--side)}
+.stage{position:relative;min-width:0;min-height:0;overflow:auto;background:var(--canvas);display:flex;justify-content:center}
+.stage iframe{display:block;width:100%;height:100%;border:0;background:var(--white);box-shadow:var(--shadow)}
+.stage[data-width="tablet"] iframe{width:var(--frame-tablet)}
+.stage[data-width="phone"] iframe{width:var(--frame-phone)}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:var(--s5);background:var(--overlay);text-align:center;font-size:var(--base)}
+.side{display:flex;flex-direction:column;min-height:0;border-left:var(--border) solid var(--line);background:var(--surface)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:var(--border) solid var(--line)}
+.tabs button{border:0;border-radius:0;border-bottom:var(--outline) solid transparent}
+.tabs button[aria-selected="true"]{border-bottom-color:var(--action);color:var(--action);font-weight:var(--strong)}
+.panel{flex:1;min-height:0;overflow:auto;padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3)}
+.panel h2{margin:0;font-size:var(--base)}
+.panel h3{margin:var(--s2) 0 0;font-size:var(--sm);color:var(--muted)}
+.hint{margin:0;color:var(--muted);font-size:var(--xs)}
+.crumbs{display:flex;flex-wrap:wrap;gap:var(--s1)}
+.crumbs button{min-height:auto;padding:0 var(--s2);font-size:var(--xs)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2)}
+.field{display:flex;flex-direction:column;gap:var(--s1);font-size:var(--xs);color:var(--muted);min-width:0}
+.field.wide{grid-column:1/-1}
+.pair{display:flex;gap:var(--s1)}
+.pair input[type="color"]{flex:0 0 var(--tap);padding:var(--s1)}
+.check{display:flex;align-items:center;gap:var(--s2);font-size:var(--sm)}
+.check input{width:auto;min-height:auto}
+.row-actions{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.thumb{max-width:100%;max-height:var(--thumb);object-fit:contain;border:var(--border) solid var(--line);border-radius:var(--radius-small);background:var(--canvas)}
+.snippet{font-family:var(--code);font-size:var(--xs);min-height:var(--snippet)}
+.card{border:var(--border) solid var(--line);border-radius:var(--radius);padding:var(--s3);display:flex;flex-direction:column;gap:var(--s2);background:var(--white)}
+.card[data-active="true"]{border-color:var(--action);box-shadow:0 0 0 var(--border) var(--action)}
+.card-head{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap}
+.card-head strong{flex:1;min-width:0}
+.badge{font-size:var(--xs);padding:0 var(--s2);border-radius:var(--radius-small);background:var(--action-soft);color:var(--action);white-space:nowrap}
+.badge[data-tone="warn"]{background:var(--warning-soft);color:var(--warning)}
+.badge[data-tone="error"]{background:var(--danger-soft);color:var(--danger)}
+.quote{margin:0;padding-left:var(--s2);border-left:var(--outline) solid var(--line);color:var(--muted);font-size:var(--xs);overflow-wrap:anywhere;max-height:4.8em;overflow:hidden}
+.log{margin:0;max-height:var(--log);overflow:auto;padding:var(--s2);background:var(--canvas);border-radius:var(--radius-small);font:var(--xs)/1.5 var(--code);white-space:pre-wrap;overflow-wrap:anywhere}
+.summary{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.version{display:flex;align-items:center;gap:var(--s2);border-bottom:var(--border) solid var(--line);padding-bottom:var(--s2)}
+.version div{flex:1;min-width:0}
+.version p{margin:0;overflow-wrap:anywhere}
+.empty{color:var(--muted);text-align:center;padding:var(--s5) 0}
+details summary{cursor:pointer;color:var(--muted)}
+@media (max-width:900px){
+  body{overflow:auto;height:auto}
+  .workspace{display:flex;flex-direction:column}
+  .stage{height:70vh;flex:none}
+  .side{border-left:0;border-top:var(--border) solid var(--line)}
+  .panel{overflow:visible}
+  .stage[data-width="tablet"] iframe{width:100%}
+}
+@media (max-width:480px){
+  .topbar,.toolbar{padding:var(--s2)}
+  .fields{grid-template-columns:1fr}
+  .doc-title{flex-basis:100%;order:3}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="/">← 资料库</a>
+  <h1 class="doc-title" id="docTitle">正在载入…</h1>
+  <span class="status" id="status" role="status">载入中</span>
+  <div class="group" role="group" aria-label="编辑模式">
+    <button id="modeText" data-mode="text" aria-pressed="true" title="直接在页面上改字、改格式">改文字</button>
+    <button id="modeSelect" data-mode="select" aria-pressed="false" title="点选元素，调整样式、图片和位置">选元素</button>
+  </div>
+  <div class="group">
+    <button id="undo" title="撤销（⌘Z）" aria-label="撤销">↶</button>
+    <button id="redo" title="重做（⇧⌘Z）" aria-label="重做">↷</button>
+    <button id="annotate" title="给选中的文字或元素加标注，之后交给 Codex">＋ 标注</button>
+    <button id="openBrowser" title="用系统默认浏览器打开原文件">浏览器打开</button>
+    <button id="save" class="primary" title="保存到原文件（⌘S），保存前自动备份">保存</button>
+  </div>
+</header>
+<div class="toolbar" id="formatBar" role="toolbar" aria-label="文字格式">
+  <button data-cmd="bold" title="加粗"><b>B</b></button>
+  <button data-cmd="italic" title="斜体"><i>I</i></button>
+  <button data-cmd="underline" title="下划线"><u>U</u></button>
+  <button data-cmd="strikeThrough" title="删除线"><s>S</s></button>
+  <span class="sep"></span>
+  <button data-block="h1" title="一级标题">H1</button>
+  <button data-block="h2" title="二级标题">H2</button>
+  <button data-block="h3" title="三级标题">H3</button>
+  <button data-block="p" title="正文段落">正文</button>
+  <button data-cmd="insertUnorderedList" title="项目列表">• 列表</button>
+  <button data-cmd="insertOrderedList" title="编号列表">1. 列表</button>
+  <span class="sep"></span>
+  <button data-cmd="justifyLeft" title="左对齐">左</button>
+  <button data-cmd="justifyCenter" title="居中">中</button>
+  <button data-cmd="justifyRight" title="右对齐">右</button>
+  <span class="sep"></span>
+  <label class="color-tool">字色<input type="color" id="foreColor" value="#202f30"></label>
+  <label class="color-tool">底色<input type="color" id="backColor" value="#fff3a3"></label>
+  <button data-cmd="createLink" title="把选中文字设为链接">链接</button>
+  <button data-cmd="unlink" title="取消链接">去链接</button>
+  <button data-cmd="removeFormat" title="清除选中文字的格式">清除格式</button>
+  <span class="sep"></span>
+  <select id="frameWidth" aria-label="预览宽度"><option value="full">桌面宽度</option><option value="tablet">平板 768</option><option value="phone">手机 390</option></select>
+</div>
+<p class="notice" id="notice" hidden></p>
+<main class="workspace">
+  <section class="stage" id="stage" data-width="full" aria-label="页面预览">
+    <iframe id="frame" title="可编辑的页面" sandbox="allow-same-origin"></iframe>
+    <div class="overlay" id="overlay" hidden></div>
+  </section>
+  <aside class="side" aria-label="编辑面板">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="element" aria-selected="true">元素</button>
+      <button role="tab" data-tab="notes" aria-selected="false">标注 <span id="noteCount"></span></button>
+      <button role="tab" data-tab="codex" aria-selected="false">Codex</button>
+      <button role="tab" data-tab="versions" aria-selected="false">版本</button>
+    </div>
+    <section class="panel" data-panel="element" role="tabpanel">
+      <div id="elementEmpty" class="empty">在「选元素」模式点击页面上的任意部分，<br>或在「改文字」模式点进文字，这里会显示它的样式和操作。</div>
+      <div id="elementBox" hidden>
+        <h2 id="elementName"></h2>
+        <div class="crumbs" id="crumbs" aria-label="所在层级"></div>
+        <div class="row-actions">
+          <button id="selectParent">选上一级</button>
+          <button id="moveUp">上移</button>
+          <button id="moveDown">下移</button>
+          <button id="duplicate">复制一份</button>
+          <button id="remove" class="danger">删除</button>
+        </div>
+        <div id="imageBox" class="card" hidden>
+          <strong>图片</strong>
+          <img id="imageThumb" class="thumb" alt="">
+          <p class="hint" id="imageSrc"></p>
+          <label class="field">替代文字（alt）<input id="imageAlt"></label>
+          <div class="row-actions">
+            <button id="replaceImage">换成本机图片…</button>
+            <input type="file" id="imageFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+          </div>
+          <label class="field">想让 Codex 怎么改这张图<textarea id="imageAsk" placeholder="例如：换成更明亮的配色；去掉右下角文字；按同样风格重画成横版"></textarea></label>
+          <button id="imageToCodex">加入标注，交给 Codex 改图</button>
+        </div>
+        <h3>样式（只作用于这个元素）</h3>
+        <div class="fields" id="styleFields"></div>
+        <label class="check"><input type="checkbox" id="hideElement">隐藏这个元素</label>
+        <details id="htmlDetails">
+          <summary>直接编辑这段 HTML</summary>
+          <textarea id="htmlEditor" class="snippet" spellcheck="false"></textarea>
+          <div class="row-actions"><button id="applyHtml">应用这段 HTML</button></div>
+        </details>
+        <button id="annotateElement">给这个元素加标注</button>
+      </div>
+    </section>
+    <section class="panel" data-panel="notes" role="tabpanel" hidden>
+      <h2>标注</h2>
+      <p class="hint">选中文字或元素后点「＋ 标注」，写下想怎么改。勾选的未完成标注会一起交给 Codex。标注自动保存，不会写进页面。</p>
+      <div id="noteList"></div>
+    </section>
+    <section class="panel" data-panel="codex" role="tabpanel" hidden>
+      <h2>交给 Codex 修改</h2>
+      <p class="hint" id="codexHint">Codex 在隔离目录里改一份副本；完成后管理器先备份原文件再写回，可一键撤销。改图时 Codex 会用它的生图工具，新图片放在页面旁的资源文件夹里。</p>
+      <label class="field wide">整体要求（可选）<textarea id="codexAsk" placeholder="例如：把第二部分改写得更口语化；统一小标题样式；整体排版更紧凑"></textarea></label>
+      <label class="check"><input type="checkbox" id="codexNotes" checked>一起处理已勾选的标注（<span id="pickedCount">0</span> 条）</label>
+      <div class="row-actions"><button id="codexRun" class="primary">开始修改</button></div>
+      <div id="jobBox" class="card" hidden>
+        <div class="card-head"><strong id="jobTitle">任务</strong><span class="badge" id="jobStatus"></span></div>
+        <p class="hint" id="jobMeta"></p>
+        <p class="summary" id="jobSummary"></p>
+        <details id="jobLogBox"><summary>运行日志（最近部分）</summary><pre class="log" id="jobLog"></pre></details>
+        <div class="row-actions">
+          <button id="jobCancel" class="danger" hidden>停止任务</button>
+          <button id="jobUndo" hidden>撤销这次修改</button>
+        </div>
+      </div>
+      <h3>历史任务</h3>
+      <div id="jobList"></div>
+    </section>
+    <section class="panel" data-panel="versions" role="tabpanel" hidden>
+      <h2>版本备份</h2>
+      <p class="hint">每次保存、恢复或 Codex 写回前，原文件都会先备份到这里（每个页面保留最近 60 份）。</p>
+      <div id="versionList"></div>
+    </section>
+  </aside>
+</main>
+<script>
+'use strict';
+const TOKEN='__TOKEN__';
+const $=id=>document.getElementById(id);
+const pageId=new URLSearchParams(location.search).get('id')||'';
+const FINAL=new Set(['applied','failed','cancelled','conflict','nochange','interrupted','undone']);
+const STATUS={queued:'排队中',running:'运行中',applied:'已写回',failed:'失败',cancelled:'已取消',conflict:'有冲突未写回',nochange:'没有改动',interrupted:'已中断',undone:'已撤销'};
+const KINDS={text:'文字内容',layout:'排版样式',image:'图片',other:'其他'};
+const HM_ATTRS=['data-hm-hover','data-hm-selected','data-hm-note'];
+const STYLE_FIELDS=[
+  ['font-size','字号','如 18px'],['font-weight','字重','',['','400','500','600','700','800']],
+  ['color','文字颜色','',null,'color'],['background-color','背景色','',null,'color'],
+  ['text-align','对齐','',['','left','center','right','justify']],['line-height','行高','如 1.6'],
+  ['margin','外边距','如 0 0 16px'],['padding','内边距','如 12px 16px'],
+  ['width','宽度','如 100% 或 320px'],['max-width','最大宽度','如 720px'],
+  ['border-radius','圆角','如 8px'],['letter-spacing','字间距','如 0.02em']];
+let info=null,doc=null,mode='text',selected=null,hovered=null,digest='';
+let notes=[],picked=new Set(),activeNote='',noteTimer=null,notesSaving=Promise.resolve();
+let stack=[],cursor=-1,savedKey='',snapTimer=null,dirty=false,saving=false,locked=false;
+let job=null,pollTimer=null,savedRange=null,frameReady=false,flash='',uploading=0;
+
+async function api(action,payload,get){
+  const response=get?await fetch('/api/editor/'+action+'?'+new URLSearchParams(payload)):
+    await fetch((action==='open'?'/api/':'/api/editor/')+action,{method:'POST',headers:{'Content-Type':'application/json','X-HTML-Token':TOKEN},body:JSON.stringify(payload)});
+  let data={};
+  try{data=await response.json()}catch(_){}
+  if(!response.ok){const error=new Error(data.error||('请求失败（'+response.status+'）'));error.status=response.status;throw error}
+  return data;
+}
+function el(tag,text,cls){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node}
+function notify(text,tone){const box=$('notice');box.hidden=!text;box.textContent=text||'';box.dataset.tone=tone||'';}
+function setStatus(text,tone){$('status').textContent=text;$('status').dataset.tone=tone||''}
+function timeText(seconds){return seconds?new Date(seconds*1000).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}):''}
+function sizeText(bytes){return bytes>1048576?(bytes/1048576).toFixed(1)+' MB':Math.max(1,Math.round(bytes/1024))+' KB'}
+
+/* ---------- loading ---------- */
+async function load(keepTab){
+  // Keep a success message (restored / Codex applied / undone) across the preview reload.
+  const box=$('notice');flash=!box.hidden&&box.dataset.tone==='ok'?box.textContent:'';
+  try{
+    info=await api('info',{id:pageId},true);
+  }catch(error){setStatus('无法载入','error');notify(error.message,'error');$('docTitle').textContent='无法打开这个页面';lockUi('无法载入：'+error.message);return}
+  digest=info.digest;
+  document.title='编辑 · '+info.record.title;
+  $('docTitle').textContent=info.record.title;
+  $('docTitle').title=info.record.path;
+  frameReady=false;
+  $('frame').src=info.preview+'?v='+Date.now();
+  if(!info.codex){$('codexRun').disabled=true;$('codexHint').textContent='本机没有找到 codex 命令，暂时不能交给 Codex。安装 Codex CLI 后重启管理器即可。'}
+  loadNotes();loadVersions();loadJobs();
+  if(info.job){job=info.job;showJob();poll()}
+}
+$('frame').addEventListener('load',()=>{
+  doc=$('frame').contentDocument;
+  if(!doc||!doc.body||!info)return;
+  frameReady=true;
+  const css=getComputedStyle(document.documentElement);
+  const style=doc.createElement('style');
+  style.setAttribute('data-hm-editor','');
+  style.textContent='[data-hm-hover]{outline:2px dashed '+css.getPropertyValue('--focus')+'!important;outline-offset:2px!important;cursor:pointer}'+
+    '[data-hm-note]{outline:2px dashed '+css.getPropertyValue('--warning')+'!important;outline-offset:2px!important}'+
+    '[data-hm-selected]{outline:2px solid '+css.getPropertyValue('--action')+'!important;outline-offset:2px!important}';
+  (doc.head||doc.documentElement).append(style);
+  doc.addEventListener('mouseover',onHover,true);
+  doc.addEventListener('mouseout',()=>setHover(null),true);
+  doc.addEventListener('click',onClick,true);
+  doc.addEventListener('input',changed);
+  doc.addEventListener('keydown',onKey);
+  doc.addEventListener('paste',onPaste);
+  doc.addEventListener('submit',event=>event.preventDefault(),true);
+  doc.addEventListener('selectionchange',()=>{const s=doc.getSelection();if(s&&s.rangeCount&&mode==='text')savedRange=s.getRangeAt(0).cloneRange()});
+  selected=null;showElement();
+  stack=[];cursor=-1;snapshot();savedKey=stack[0].key;dirty=false;
+  setMode(mode);applyNoteMarks();refreshState();
+  const kept=!!flash,notices=kept?[flash]:[];flash='';
+  if(!info.editable)notices.push(info.reason+'。可以查看，但不能保存或交给 Codex。');
+  if(doc.querySelector('script'))notices.push('这个页面带脚本：编辑视图不运行脚本，脚本生成的内容不会显示；保存会原样保留脚本代码。');
+  notify(notices.join(' '),notices.length&&kept?'ok':'');
+});
+
+/* ---------- serialisation and stack ---------- */
+function stripMarks(root){
+  for(const name of HM_ATTRS){
+    if(root.removeAttribute)root.removeAttribute(name);
+    root.querySelectorAll('['+name+']').forEach(node=>node.removeAttribute(name));
+  }
+  root.querySelectorAll('[data-hm-editor]').forEach(node=>node.remove());
+  return root;
+}
+function serialize(){
+  let out='';
+  for(const node of doc.childNodes){
+    if(node.nodeType===10){
+      out+='<!DOCTYPE '+node.name+(node.publicId?' PUBLIC "'+node.publicId+'"':'')+(node.systemId?(node.publicId?'':' SYSTEM')+' "'+node.systemId+'"':'')+'>\n';
+    }else if(node.nodeType===8){out+='<!--'+node.data+'-->\n'}
+    else if(node===doc.documentElement){out+=stripMarks(node.cloneNode(true)).outerHTML+'\n'}
+  }
+  return out;
+}
+function bodyKey(){
+  const attrs=[...doc.body.attributes].filter(a=>!HM_ATTRS.includes(a.name)).map(a=>a.name+'='+a.value).join('|');
+  return attrs+'\n'+doc.body.innerHTML.replace(/\sdata-hm-(?:hover|selected|note)(?:="[^"]*")?/g,'');
+}
+function snapshot(){
+  if(!doc||!doc.body)return;
+  const key=bodyKey();
+  if(stack[cursor]&&stack[cursor].key===key)return;
+  stack=stack.slice(0,cursor+1);
+  stack.push({key,html:doc.body.innerHTML,attrs:[...doc.body.attributes].filter(a=>!HM_ATTRS.includes(a.name)).map(a=>[a.name,a.value])});
+  if(stack.length>100)stack.shift();
+  cursor=stack.length-1;
+}
+function changed(){
+  dirty=true;refreshState();
+  clearTimeout(snapTimer);
+  snapTimer=setTimeout(()=>{snapshot();dirty=bodyKey()!==savedKey;refreshState()},400);
+}
+function commit(){clearTimeout(snapTimer);snapshot();dirty=bodyKey()!==savedKey;refreshState();applyNoteMarks()}
+function travel(step){
+  if(!doc||locked)return;
+  clearTimeout(snapTimer);snapshot();
+  const next=cursor+step;
+  if(next<0||next>=stack.length)return;
+  cursor=next;
+  const state=stack[cursor];
+  for(const attr of [...doc.body.attributes])if(!HM_ATTRS.includes(attr.name))doc.body.removeAttribute(attr.name);
+  for(const [name,value] of state.attrs)doc.body.setAttribute(name,value);
+  doc.body.innerHTML=state.html;
+  doc.querySelectorAll('[data-hm-hover],[data-hm-selected]').forEach(n=>{n.removeAttribute('data-hm-hover');n.removeAttribute('data-hm-selected')});
+  selected=null;hovered=null;showElement();applyNoteMarks();
+  dirty=bodyKey()!==savedKey;refreshState();
+}
+function refreshState(){
+  const editable=info&&info.editable&&!locked&&frameReady;
+  $('undo').disabled=!editable||cursor<=0;
+  $('redo').disabled=!editable||cursor>=stack.length-1;
+  $('save').disabled=!editable||!dirty||saving;
+  if(locked)setStatus('Codex 修改中','dirty');
+  else if(saving)setStatus('保存中…','dirty');
+  else if(info&&!info.editable)setStatus('只读','error');
+  else setStatus(dirty?'有未保存的修改':'已保存',dirty?'dirty':'');
+}
+
+/* ---------- saving ---------- */
+async function save(){
+  if(!doc||!info||!info.editable||locked||saving)return false;
+  clearTimeout(snapTimer);snapshot();
+  saving=true;refreshState();
+  try{
+    // Bind the saved state to what was actually sent; edits typed while the request is in flight stay dirty.
+    const sentKey=stack[cursor].key,html=serialize();
+    const result=await api('save',{id:pageId,html,digest});
+    digest=result.digest;savedKey=sentKey;dirty=bodyKey()!==savedKey;
+    notify(result.unchanged?'内容没有变化，未写入。':'已保存，保存前的版本已备份。','ok');
+    loadVersions();return true;
+  }catch(error){
+    if(error.status===409)showConflict(error.message);else notify('保存失败：'+error.message,'error');
+    return false;
+  }finally{saving=false;refreshState()}
+}
+function showConflict(message){
+  const box=$('notice');box.hidden=false;box.dataset.tone='error';box.replaceChildren(el('span',message+' '));
+  const copy=el('button','复制我的版本');copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(serialize());copy.textContent='已复制'}catch(_){copy.textContent='复制失败'}});
+  const reload=el('button','放弃我的修改并重新载入');reload.addEventListener('click',()=>{dirty=false;load()});
+  box.append(copy,' ',reload);
+}
+
+/* ---------- modes, hover and selection ---------- */
+function setMode(next){
+  mode=next;
+  $('modeText').setAttribute('aria-pressed',String(mode==='text'));
+  $('modeSelect').setAttribute('aria-pressed',String(mode==='select'));
+  if(doc)doc.designMode=(mode==='text'&&info&&info.editable&&!locked)?'on':'off';
+  for(const button of $('formatBar').querySelectorAll('button,input'))button.disabled=mode!=='text'||!info||!info.editable||locked;
+  $('frameWidth').disabled=false;
+  if(mode!=='select')setHover(null);
+}
+function setHover(node){
+  if(hovered&&hovered!==node)hovered.removeAttribute('data-hm-hover');
+  hovered=node;
+  if(node&&node!==doc.documentElement)node.setAttribute('data-hm-hover','');
+}
+function onHover(event){if(mode==='select'&&!locked)setHover(event.target.nodeType===1?event.target:null)}
+function onClick(event){
+  const target=event.target.nodeType===1?event.target:event.target.parentElement;
+  if(mode==='select'){event.preventDefault();event.stopPropagation()}
+  else{const link=target&&target.closest('a');if(link)event.preventDefault()}
+  if(target&&target!==doc.documentElement)select(target);
+}
+function select(node){
+  if(selected)selected.removeAttribute('data-hm-selected');
+  selected=node&&node.isConnected?node:null;
+  if(selected){selected.setAttribute('data-hm-selected','');if(mode==='select')showTab('element')}
+  showElement();
+}
+function describe(node){
+  let name=node.localName;
+  if(node.id)name+='#'+node.id;
+  else if(node.classList.length)name+='.'+[...node.classList].slice(0,2).join('.');
+  return name;
+}
+const TAG_NAMES={h1:'一级标题',h2:'二级标题',h3:'三级标题',h4:'四级标题',p:'段落',img:'图片',a:'链接',ul:'列表',ol:'编号列表',li:'列表项',table:'表格',section:'区块',div:'容器',span:'行内文字',button:'按钮',header:'页眉',footer:'页脚',figure:'插图',body:'整页'};
+function showElement(){
+  const show=!!selected;
+  $('elementEmpty').hidden=show;$('elementBox').hidden=!show;
+  if(!show)return;
+  $('elementName').textContent=(TAG_NAMES[selected.localName]||'元素')+' · '+describe(selected);
+  const crumbs=[];
+  for(let node=selected;node&&node!==doc.documentElement;node=node.parentElement)crumbs.unshift(node);
+  $('crumbs').replaceChildren(...crumbs.slice(-6).map(node=>{const b=el('button',describe(node));b.addEventListener('click',()=>select(node));b.setAttribute('aria-current',String(node===selected));return b}));
+  const isBody=selected===doc.body;
+  for(const id of ['moveUp','moveDown','duplicate','remove'])$(id).disabled=isBody||!info.editable||locked;
+  $('selectParent').disabled=isBody;
+  const view=doc.defaultView.getComputedStyle(selected);
+  for(const input of $('styleFields').querySelectorAll('[data-prop]')){
+    const prop=input.dataset.prop;
+    if(input.type==='color'){input.value=toHex(selected.style.getPropertyValue(prop)||view.getPropertyValue(prop))}
+    else{input.value=selected.style.getPropertyValue(prop);input.placeholder=view.getPropertyValue(prop)||input.dataset.hint}
+    input.disabled=!info.editable||locked;
+  }
+  $('hideElement').checked=selected.style.display==='none';
+  $('hideElement').disabled=isBody||!info.editable||locked;
+  $('htmlEditor').value=stripMarks(selected.cloneNode(true)).outerHTML;
+  $('applyHtml').disabled=isBody||!info.editable||locked;
+  const image=selected.localName==='img';
+  $('imageBox').hidden=!image;
+  if(image){
+    const source=selected.currentSrc||selected.src;
+    $('imageThumb').src=source.startsWith(location.origin)||source.startsWith('data:')?source:'';
+    $('imageThumb').hidden=!$('imageThumb').src;
+    $('imageSrc').textContent='地址：'+(selected.getAttribute('src')||'（无）');
+    $('imageAlt').value=selected.getAttribute('alt')||'';
+    $('imageAlt').disabled=$('replaceImage').disabled=!info.editable||locked;
+  }
+}
+function toHex(value){
+  const match=String(value).match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if(match)return '#'+match.slice(1,4).map(n=>Number(n).toString(16).padStart(2,'0')).join('');
+  return /^#[0-9a-f]{6}$/i.test(value)?value:'#000000';
+}
+function buildStyleFields(){
+  for(const [prop,label,hint,options,kind] of STYLE_FIELDS){
+    const field=el('label',undefined,'field');field.append(label);
+    let input;
+    if(options){input=el('select');for(const value of options){const o=el('option',value||'默认');o.value=value;input.append(o)}}
+    else{input=el('input');input.type='text';input.placeholder=hint}
+    input.dataset.prop=prop;input.dataset.hint=hint;
+    if(kind==='color'){
+      const pair=el('div',undefined,'pair'),swatch=el('input');swatch.type='color';swatch.dataset.prop=prop;swatch.setAttribute('aria-label',label+'取色');
+      swatch.addEventListener('input',()=>{input.value=swatch.value;setStyle(prop,swatch.value)});
+      pair.append(input,swatch);field.append(pair);
+    }else field.append(input);
+    input.addEventListener('change',()=>setStyle(prop,input.value.trim()));
+    $('styleFields').append(field);
+  }
+}
+function setStyle(prop,value){
+  if(!selected||!info.editable||locked)return;
+  if(value)selected.style.setProperty(prop,value);else selected.style.removeProperty(prop);
+  if(!selected.getAttribute('style'))selected.removeAttribute('style');
+  commit();
+}
+
+/* ---------- element operations ---------- */
+function op(action){
+  if(!selected||selected===doc.body||!info.editable||locked)return;
+  const node=selected;
+  if(action==='up'&&node.previousElementSibling)node.previousElementSibling.before(node);
+  else if(action==='down'&&node.nextElementSibling)node.nextElementSibling.after(node);
+  else if(action==='duplicate'){const copy=node.cloneNode(true);stripMarks(copy);node.after(copy);select(copy)}
+  else if(action==='remove'){const parent=node.parentElement;node.remove();select(parent===doc.documentElement?null:parent)}
+  commit();showElement();
+}
+function applyHtml(){
+  if(!selected||selected===doc.body||locked)return;
+  const template=doc.createElement('template');
+  template.innerHTML=$('htmlEditor').value;
+  const first=template.content.firstElementChild;
+  selected.replaceWith(template.content);
+  select(first||null);commit();
+}
+
+/* ---------- formatting ---------- */
+function restoreRange(){
+  $('frame').contentWindow.focus();
+  if(savedRange){const s=doc.getSelection();s.removeAllRanges();s.addRange(savedRange)}
+}
+function exec(command,value){
+  if(!doc||mode!=='text'||locked)return;
+  restoreRange();
+  doc.execCommand('styleWithCSS',false,true);
+  if(command==='createLink'){
+    const url=prompt('链接地址','https://');
+    if(!url)return;
+    restoreRange();value=url;
+  }
+  doc.execCommand(command,false,value);
+  changed();
+}
+function onPaste(event){
+  if(mode!=='text')return;
+  event.preventDefault();
+  doc.execCommand('insertText',false,(event.clipboardData||new DataTransfer()).getData('text/plain'));
+}
+function onKey(event){
+  const meta=event.metaKey||event.ctrlKey,key=event.key.toLowerCase();
+  if(meta&&key==='s'){event.preventDefault();save()}
+  else if(meta&&key==='z'){event.preventDefault();travel(event.shiftKey?1:-1)}
+  else if(meta&&key==='y'){event.preventDefault();travel(1)}
+  else if(event.key==='Escape'&&event.target.ownerDocument===doc){select(null)}
+}
+
+/* ---------- annotations ---------- */
+function selectorFor(node){
+  if(node===doc.body)return 'body';
+  const parts=[];
+  for(let n=node;n&&n.nodeType===1&&n!==doc.documentElement;n=n.parentElement){
+    if(n.id&&doc.querySelectorAll('#'+CSS.escape(n.id)).length===1){parts.unshift('#'+CSS.escape(n.id));break}
+    if(n===doc.body){parts.unshift('body');break}
+    let index=1;for(let s=n.previousElementSibling;s;s=s.previousElementSibling)if(s.localName===n.localName)index++;
+    parts.unshift(n.localName+':nth-of-type('+index+')');
+  }
+  return parts.join(' > ');
+}
+function addNote(node,text,kind,instruction){
+  const html=stripMarks(node.cloneNode(true)).outerHTML;
+  const note={id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),selector:selectorFor(node),tag:node.localName,
+    text:(text||node.innerText||node.getAttribute('alt')||'').trim().slice(0,1000),html:html.slice(0,6000),
+    src:node.localName==='img'?(node.getAttribute('src')||''):'',instruction:instruction||'',
+    kind:kind||(node.localName==='img'?'image':'text'),status:'open',created:Date.now()/1000};
+  notes.push(note);picked.add(note.id);activeNote=note.id;
+  saveNotes();renderNotes();showTab('notes');
+  const box=document.querySelector('[data-note="'+note.id+'"] textarea');
+  if(box&&!instruction)box.focus();
+}
+function annotateCurrent(){
+  if(!doc)return;
+  const selection=doc.getSelection();
+  if(mode==='text'&&selection&&!selection.isCollapsed&&selection.toString().trim()){
+    let node=selection.getRangeAt(0).commonAncestorContainer;
+    if(node.nodeType!==1)node=node.parentElement;
+    return addNote(node,selection.toString(),'text');
+  }
+  if(selected)return addNote(selected);
+  notify('先选中一段文字，或在「选元素」模式点一下要标注的位置。');
+}
+async function loadNotes(){
+  try{notes=(await api('annotations',{id:pageId},true)).annotations}catch(error){notes=[];notify('标注读取失败：'+error.message,'error')}
+  picked=new Set(notes.filter(n=>n.status==='open').map(n=>n.id));
+  renderNotes();applyNoteMarks();
+}
+function saveNotes(){
+  clearTimeout(noteTimer);
+  noteTimer=setTimeout(()=>flushNotes().catch(()=>{}),500);
+}
+// Resolves only after the server stored the notes; callers that depend on them (Codex start) see failures.
+function flushNotes(){
+  clearTimeout(noteTimer);
+  let revs;
+  const run=notesSaving.then(()=>{revs=new Map(notes.map(n=>[n.id,n.rev||0]));return api('annotations',{id:pageId,annotations:notes})}).then(result=>{
+    // The server owns job-related status ("sent"/"done" set by Codex jobs); adopt it unless the user changed it meanwhile.
+    let changed=false;
+    for(const row of result.annotations){const note=notes.find(n=>n.id===row.id);if(note&&note.status!==row.status&&(note.rev||0)===revs.get(row.id)){note.status=row.status;changed=true}}
+    if(changed){renderNotes();applyNoteMarks()}
+  });
+  notesSaving=run.catch(error=>notify('标注保存失败：'+error.message,'error'));
+  return run;
+}
+function applyNoteMarks(){
+  if(!doc)return;
+  doc.querySelectorAll('[data-hm-note]').forEach(n=>n.removeAttribute('data-hm-note'));
+  notes.forEach((note,index)=>{
+    if(note.status==='done')return;
+    const node=findNote(note);
+    if(node)node.setAttribute('data-hm-note',String(index+1));
+  });
+}
+function findNote(note){try{return doc&&doc.querySelector(note.selector)}catch(_){return null}}
+function renderNotes(){
+  const open=notes.filter(n=>n.status!=='done').length;
+  $('noteCount').textContent=open?'('+open+')':'';
+  updatePicked();
+  const list=$('noteList');
+  if(!notes.length){list.replaceChildren(el('p','还没有标注。','empty'));return}
+  list.replaceChildren(...notes.map((note,index)=>{
+    const card=el('div',undefined,'card');card.dataset.note=note.id;card.dataset.active=String(note.id===activeNote);
+    const head=el('div',undefined,'card-head');
+    const check=el('input');check.type='checkbox';check.checked=picked.has(note.id);check.disabled=note.status!=='open';
+    check.setAttribute('aria-label','交给 Codex：标注 '+(index+1));
+    check.addEventListener('change',()=>{check.checked?picked.add(note.id):picked.delete(note.id);updatePicked()});
+    const kind=el('select');for(const [value,label] of Object.entries(KINDS)){const o=el('option',label);o.value=value;kind.append(o)}
+    kind.value=note.kind;kind.style.width='auto';kind.addEventListener('change',()=>{note.kind=kind.value;saveNotes()});
+    const status=el('span',note.status==='open'?'未处理':note.status==='sent'?'Codex 处理中':'已完成','badge');
+    if(note.status==='open')status.dataset.tone='warn';
+    head.append(check,el('strong','#'+(index+1)),kind,status);
+    card.append(head);
+    if(note.text)card.append(el('p','“'+note.text.slice(0,160)+(note.text.length>160?'…':'')+'”','quote'));
+    if(!findNote(note)&&frameReady)card.append(el('p','页面里已找不到这个位置（可能被改动过），Codex 仍会按原文定位。','hint'));
+    const ask=el('textarea');ask.value=note.instruction;ask.placeholder='想怎么改？例如：改成“…”；字号小一点；这张图换成…';
+    ask.setAttribute('aria-label','标注 '+(index+1)+' 的修改要求');
+    ask.addEventListener('input',()=>{note.instruction=ask.value;saveNotes()});
+    const actions=el('div',undefined,'row-actions');
+    const locate=el('button','定位');locate.addEventListener('click',()=>{activeNote=note.id;const node=findNote(note);if(node){node.scrollIntoView({block:'center',behavior:'smooth'});select(node);showTab('notes')}renderNotes()});
+    const done=el('button',note.status==='done'?'重新打开':'标为完成');done.addEventListener('click',()=>{note.status=note.status==='done'?'open':'done';note.rev=(note.rev||0)+1;if(note.status==='open')picked.add(note.id);else picked.delete(note.id);saveNotes();renderNotes();applyNoteMarks()});
+    const remove=el('button','删除','danger');remove.addEventListener('click',()=>{notes=notes.filter(n=>n!==note);picked.delete(note.id);saveNotes();renderNotes();applyNoteMarks()});
+    done.disabled=remove.disabled=ask.disabled=kind.disabled=note.status==='sent';
+    if(note.status==='sent')ask.title='Codex 正在处理这条标注，完成后才能修改';
+    actions.append(locate,done,remove);
+    card.append(ask,actions);
+    return card;
+  }));
+}
+function updatePicked(){$('pickedCount').textContent=String(notes.filter(n=>n.status==='open'&&picked.has(n.id)).length)}
+
+/* ---------- images ---------- */
+async function replaceImage(file){
+  if(!file||!selected||selected.localName!=='img')return;
+  if(file.size>12*1024*1024){notify('图片需小于 12 MB','error');return}
+  const node=selected;
+  const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file)});
+  uploading++;
+  try{
+    notify('正在上传图片…');
+    const result=await api('upload',{id:pageId,name:file.name,data});
+    // The page may have been locked (Codex) or reloaded while uploading; never touch it then.
+    if(locked||!frameReady||!node.isConnected||node.ownerDocument!==doc||doc!==$('frame').contentDocument){notify('图片已上传到资源文件夹，但页面已锁定或重新载入，没有替换。请稍后重新换图。','error');return}
+    node.setAttribute('src',result.src);node.removeAttribute('srcset');
+    if(node.parentElement&&node.parentElement.localName==='picture')node.parentElement.querySelectorAll('source').forEach(s=>s.remove());
+    commit();showElement();
+    notify('图片已放进页面旁的资源文件夹，记得点「保存」写入页面。','ok');
+  }catch(error){notify('图片上传失败：'+error.message,'error')}
+  finally{uploading--}
+}
+
+/* ---------- Codex ---------- */
+async function runCodex(){
+  if(!info||!info.codex||locked)return;
+  const instruction=$('codexAsk').value.trim();
+  const ids=$('codexNotes').checked?notes.filter(n=>n.status==='open'&&picked.has(n.id)).map(n=>n.id):[];
+  if(!instruction&&!ids.length){notify('写下整体要求，或勾选至少一条标注。');return}
+  if(uploading){notify('图片还在上传，上传完成后再点「开始修改」。','error');return}
+  $('codexRun').disabled=true;
+  try{
+    if(dirty&&!(await save()))return;
+    try{await flushNotes()}catch(error){notify('标注没保存成功，未交给 Codex：'+error.message,'error');return}
+    // Edits typed while saving would be lost when the job reloads the page; stop and let the user retry.
+    if(dirty||uploading){notify('保存期间页面又有新修改，请再点一次「开始修改」。','error');return}
+    lockUi('正在交给 Codex…');
+    let result;
+    try{result=await api('codex',{id:pageId,instruction,annotations:ids,digest})}catch(error){lockUi('');throw error}
+    job=result.job;$('codexAsk').value='';
+    notify('已交给 Codex。它在副本上修改，完成后会自动写回并刷新这里。','ok');
+    await loadNotes();showJob();poll();
+  }catch(error){notify('没能开始：'+error.message,'error')}
+  finally{$('codexRun').disabled=!info.codex||locked}
+}
+function lockUi(message){
+  locked=!!message;
+  $('overlay').hidden=!locked;$('overlay').textContent=message||'';
+  setMode(mode);refreshState();if(selected)showElement();
+  $('codexRun').disabled=locked||!info||!info.codex;
+}
+function showJob(){
+  if(!job){$('jobBox').hidden=true;return}
+  $('jobBox').hidden=false;
+  const running=!FINAL.has(job.status);
+  $('jobTitle').textContent=job.instruction?job.instruction.split('\n')[0].slice(0,40):('处理 '+job.annotations.length+' 条标注');
+  $('jobStatus').textContent=STATUS[job.status]||job.status;
+  $('jobStatus').dataset.tone=running?'warn':(job.status==='applied'?'':'error');
+  const end=job.finished||Date.now()/1000,start=job.started||job.created;
+  $('jobMeta').textContent='开始 '+timeText(job.created)+' · 用时 '+Math.max(0,Math.round(end-start))+' 秒'+(job.assets&&job.assets.length?' · 新图片 '+job.assets.length+' 张':'');
+  $('jobSummary').textContent=[job.error,job.summary].filter(Boolean).join('\n\n')||(running?'Codex 正在阅读页面并修改，通常需要 1–10 分钟。':'');
+  $('jobLog').textContent=job.log||'';
+  $('jobCancel').hidden=!running;
+  $('jobUndo').hidden=!(job.status==='applied'&&job.version);
+  lockUi(running?'Codex 正在修改这个页面…完成后自动刷新。期间页面只读，标注和版本仍可查看。':'');
+  if(running)showTab('codex',true);
+}
+function poll(){
+  clearTimeout(pollTimer);
+  if(!job||FINAL.has(job.status))return;
+  pollTimer=setTimeout(async()=>{
+    try{
+      job=(await api('job',{job:job.id},true)).job;
+      showJob();
+      if(FINAL.has(job.status)){
+        loadJobs();
+        if(job.status==='applied'){notify('Codex 已改完并写回，原文件已先备份；不满意可点「撤销这次修改」。','ok');dirty=false;load()}
+        else{loadNotes();notify((STATUS[job.status]||job.status)+'：'+(job.error||''),job.status==='nochange'?'':'error')}
+        return;
+      }
+    }catch(error){notify('读取任务状态失败：'+error.message,'error')}
+    poll();
+  },1500);
+}
+async function loadJobs(){
+  let rows=[];
+  try{rows=(await api('jobs',{id:pageId},true)).jobs}catch(_){return}
+  const list=$('jobList');
+  if(!rows.length){list.replaceChildren(el('p','还没有任务。','empty'));return}
+  list.replaceChildren(...rows.map(row=>{
+    const card=el('details',undefined,'card');
+    const summary=el('summary',(STATUS[row.status]||row.status)+' · '+timeText(row.created)+' · '+(row.instruction?row.instruction.slice(0,30):row.annotations.length+' 条标注'));
+    card.append(summary);
+    if(row.error)card.append(el('p',row.error,'hint'));
+    if(row.summary)card.append(el('p',row.summary,'summary'));
+    return card;
+  }));
+}
+
+/* ---------- versions ---------- */
+async function loadVersions(){
+  let rows=[];
+  try{rows=(await api('versions',{id:pageId},true)).versions}catch(_){return}
+  const list=$('versionList');
+  if(!rows.length){list.replaceChildren(el('p','还没有备份。第一次保存后会出现在这里。','empty'));return}
+  list.replaceChildren(...rows.map(row=>{
+    const item=el('div',undefined,'version'),text=el('div');
+    text.append(el('p',timeText(row.time)+' · '+row.label),el('p',(row.note?row.note+' · ':'')+sizeText(row.size),'hint'));
+    const restore=el('button','恢复');
+    restore.disabled=!info||!info.editable||locked;
+    restore.addEventListener('click',async()=>{
+      if(!confirm((dirty?'当前有未保存的修改，恢复后会丢失。\n':'')+'把页面恢复到 '+timeText(row.time)+' 的备份？（当前内容会先备份）'))return;
+      try{await api('restore',{id:pageId,version:row.name,digest});dirty=false;notify('已恢复，恢复前的内容也已备份。','ok');load()}
+      catch(error){notify('恢复失败：'+error.message,'error')}
+    });
+    item.append(text,restore);return item;
+  }));
+}
+
+/* ---------- tabs and wiring ---------- */
+function showTab(name,quiet){
+  for(const tab of document.querySelectorAll('[data-tab]'))tab.setAttribute('aria-selected',String(tab.dataset.tab===name));
+  for(const panel of document.querySelectorAll('[data-panel]'))panel.hidden=panel.dataset.panel!==name;
+  if(name==='notes'&&!quiet)renderNotes();
+}
+document.querySelectorAll('[data-tab]').forEach(tab=>tab.addEventListener('click',()=>showTab(tab.dataset.tab)));
+document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',()=>setMode(button.dataset.mode)));
+$('formatBar').addEventListener('mousedown',event=>{if(event.target.closest('button'))event.preventDefault()});
+$('formatBar').querySelectorAll('[data-cmd]').forEach(button=>button.addEventListener('click',()=>exec(button.dataset.cmd)));
+$('formatBar').querySelectorAll('[data-block]').forEach(button=>button.addEventListener('click',()=>exec('formatBlock','<'+button.dataset.block+'>')));
+$('foreColor').addEventListener('change',event=>exec('foreColor',event.target.value));
+$('backColor').addEventListener('change',event=>exec('hiliteColor',event.target.value));
+$('frameWidth').addEventListener('change',event=>{$('stage').dataset.width=event.target.value});
+$('undo').addEventListener('click',()=>travel(-1));
+$('redo').addEventListener('click',()=>travel(1));
+$('save').addEventListener('click',save);
+$('annotate').addEventListener('click',annotateCurrent);
+$('annotateElement').addEventListener('click',()=>selected&&addNote(selected));
+$('openBrowser').addEventListener('click',async()=>{try{await api('open',{id:pageId});notify('已请求系统浏览器打开原文件。','ok')}catch(error){notify(error.message,'error')}});
+$('selectParent').addEventListener('click',()=>selected&&selected.parentElement&&selected.parentElement!==doc.documentElement&&select(selected.parentElement));
+$('moveUp').addEventListener('click',()=>op('up'));
+$('moveDown').addEventListener('click',()=>op('down'));
+$('duplicate').addEventListener('click',()=>op('duplicate'));
+$('remove').addEventListener('click',()=>op('remove'));
+$('hideElement').addEventListener('change',event=>setStyle('display',event.target.checked?'none':''));
+$('applyHtml').addEventListener('click',applyHtml);
+$('imageAlt').addEventListener('change',event=>{if(selected){selected.setAttribute('alt',event.target.value);commit()}});
+$('replaceImage').addEventListener('click',()=>$('imageFile').click());
+$('imageFile').addEventListener('change',event=>{replaceImage(event.target.files[0]);event.target.value=''});
+$('imageToCodex').addEventListener('click',()=>{
+  if(!selected)return;
+  const ask=$('imageAsk').value.trim();
+  if(!ask){notify('先写下想怎么改这张图。');$('imageAsk').focus();return}
+  addNote(selected,selected.getAttribute('alt')||'','image',ask);$('imageAsk').value='';
+  notify('已加入标注。到「Codex」页点「开始修改」，可以和其他标注一起处理。','ok');
+});
+$('codexRun').addEventListener('click',runCodex);
+$('codexNotes').addEventListener('change',updatePicked);
+$('jobCancel').addEventListener('click',async()=>{if(!job)return;try{await api('cancel',{job:job.id});job=(await api('job',{job:job.id},true)).job;showJob();loadJobs();loadNotes()}catch(error){notify(error.message,'error')}});
+$('jobUndo').addEventListener('click',async()=>{
+  if(!job||!confirm('撤销 Codex 这次的页面修改？（当前内容会先备份）'))return;
+  if(dirty&&!confirm('当前还有未保存的手动修改，撤销后会丢失。继续？'))return;
+  try{await api('undo',{job:job.id,digest});job=(await api('job',{job:job.id},true)).job;showJob();dirty=false;notify('已撤销 Codex 的修改。','ok');load()}
+  catch(error){notify('撤销失败：'+error.message,'error')}
+});
+document.addEventListener('keydown',event=>{if(event.target.closest&&event.target.closest('input,textarea,select')&&!((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='s'))return;onKey(event)});
+window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue=''}});
+buildStyleFields();
+if(pageId)load();else{notify('缺少页面编号，请从资料库点「编辑」进入。','error');setStatus('无法载入','error')}
+</script>
+</body>
+</html>
