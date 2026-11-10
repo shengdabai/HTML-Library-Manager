@@ -328,6 +328,54 @@ class EditorTests(unittest.TestCase):
         self.assertEqual(self.page.read_text(), '<p>写临时文件期间外部写入</p>')
         self.assertEqual([p.name for p in self.sources.iterdir() if p.name.endswith('.tmp')], [])
 
+    def test_atomic_temporary_files_are_private_before_fsync(self):
+        from editor import atomic_bytes
+        seen = []
+        real_fsync = os.fsync
+
+        def inspect(fd):
+            seen.append(os.fstat(fd).st_mode & 0o777)
+            real_fsync(fd)
+
+        previous = os.umask(0)
+        try:
+            for mode in (None, 0o600, 0o644):
+                target = self.directory / ('atomic-' + str(mode))
+                with patch('editor.os.fsync', side_effect=inspect):
+                    atomic_bytes(target, b'private content', mode)
+                self.assertEqual(target.stat().st_mode & 0o777, mode if mode is not None else 0o600)
+        finally:
+            os.umask(previous)
+        self.assertEqual(seen, [0o600] * 3)
+
+    def test_codex_job_directory_is_private_before_prompt_is_written(self):
+        real_write_text = Path.write_text
+        seen = []
+
+        def inspect(path, *args, **kwargs):
+            if path.name == 'prompt.md':
+                seen.append(path.parent.stat().st_mode & 0o777)
+            return real_write_text(path, *args, **kwargs)
+
+        previous = os.umask(0)
+        try:
+            with patch.object(Path, 'write_text', inspect), patch('editor.threading.Thread'):
+                self.editor.start_job(self.id, 'change text', [], self.digest())
+        finally:
+            os.umask(previous)
+        self.assertEqual(seen, [0o700])
+
+    def test_restart_closes_access_to_existing_job_artifacts(self):
+        jobs = self.editor.base / 'jobs'
+        legacy = jobs / 'legacy'
+        legacy.mkdir(parents=True)
+        (legacy / 'prompt.md').write_text('private historical instruction')
+        jobs.chmod(0o755)
+        legacy.chmod(0o755)
+        Editor(self.catalog, codex='')
+        self.assertEqual(jobs.stat().st_mode & 0o777, 0o700)
+        self.assertEqual((legacy / 'prompt.md').read_text(), 'private historical instruction')
+
     def test_undo_refused_after_later_save(self):
         done = self.wait(self.editor.start_job(self.id, '改', [], self.digest())['job']['id'])
         self.assertEqual(done['status'], 'applied')

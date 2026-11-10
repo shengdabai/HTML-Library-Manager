@@ -63,6 +63,12 @@ class RuntimeTests(unittest.TestCase):
         for headers in [{'X-HTML-Token': ''}, {'Origin': 'null'}, {'Content-Type': 'text/plain'}]:
             self.assertEqual(self.request('POST', '/api/open', {'id': self.identifier()}, headers)[0], 403)
 
+    def test_malformed_request_url_returns_json_error(self):
+        status, payload = self.request('GET', 'http://[invalid')
+        self.assertEqual(status, 400)
+        self.assertIn('error', payload)
+        self.assertEqual(self.request('GET', '/api/library')[0], 200)
+
     def test_favorites_survive_restart(self):
         code, _ = self.request('POST', '/api/favorite', {'id': self.identifier()})
         self.assertEqual(code, 200)

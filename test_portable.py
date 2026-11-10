@@ -3,12 +3,12 @@ import re
 import tempfile
 import unittest
 from pathlib import Path
-from manager import Catalog, PROJECT, render_export
+from manager import Catalog, render_export
 
 class PortableTests(unittest.TestCase):
     def test_inline_words_are_searchable_in_service_and_export(self):
-        with tempfile.TemporaryDirectory(dir=PROJECT) as directory:
-            root = Path(directory) / 'source'; root.mkdir()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve() / 'source'; root.mkdir()
             (root / 'a.html').write_text('<h1>研究<strong>方法</strong></h1>'
                                        '<p>人工<span>智能</span>的实际用途</p>')
             catalog = Catalog(Path(directory) / 'state', [root])
@@ -32,8 +32,8 @@ class PortableTests(unittest.TestCase):
         self.assertIn('&lt;/script&gt;', page)
 
     def test_fullwidth_metadata_and_body_mode_and_all_terms(self):
-        with tempfile.TemporaryDirectory(dir=PROJECT) as directory:
-            root = Path(directory) / 'source'; root.mkdir()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve() / 'source'; root.mkdir()
             original = root / 'a.html'
             original.write_text('<title>ＦＴＳ 标题</title><p>' + ' '.join('word' + str(i) for i in range(14)) + '</p>')
             catalog = Catalog(Path(directory) / 'state', [root]); catalog.refresh(asynchronous=False)
