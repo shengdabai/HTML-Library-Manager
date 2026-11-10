@@ -308,8 +308,8 @@ def create_server(catalog, port, editor=None):
         def do_GET(self):
             if not self.trusted():
                 return
-            parts = urlsplit(self.path)
             try:
+                parts = urlsplit(self.path)
                 if parts.path == '/':
                     page = (PROJECT / 'index.html').read_text().replace('__TOKEN__', catalog.token).replace('__FALLBACK__', '本机服务模式需执行 JavaScript；离线导出版本附有文字目录。')
                     self.send(200, page.encode(), 'text/html; charset=utf-8')

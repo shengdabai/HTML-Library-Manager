@@ -57,7 +57,10 @@ def atomic_bytes(path: Path, data: bytes, mode: int | None = None, expect: bytes
     """Write via a synced temp file; with expect, refuse (Conflict) if path no longer holds those bytes."""
     temporary = path.with_name('.' + path.name + '.' + secrets.token_hex(6) + '.tmp')
     try:
-        with temporary.open('xb') as stream:
+        # Backups and annotations can contain private source text. Create the file
+        # privately before writing any bytes, regardless of the process umask.
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, 'wb') as stream:
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
@@ -104,7 +107,11 @@ class Editor:
         self.jobs: dict[str, dict] = {}
         self.processes: dict[str, subprocess.Popen] = {}
         self.codex = codex if codex is not None else find_codex()
-        for meta in sorted(self.base.glob('jobs/*/meta.json')):
+        # Also protect artifacts created by older versions of the manager.
+        jobs_root = self.base / 'jobs'
+        jobs_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        jobs_root.chmod(0o700)
+        for meta in sorted(jobs_root.glob('*/meta.json')):
             try:
                 job = json.loads(meta.read_text(), parse_constant=lambda _: None)
             except (OSError, ValueError):
@@ -438,6 +445,8 @@ class Editor:
             job_id = datetime.now().strftime('%m%d%H%M%S') + secrets.token_hex(3)
             folder = self.base / 'jobs' / job_id
             work = folder / 'work'
+            # Protect the prompt, source copy and CLI logs before creating them.
+            folder.mkdir(parents=True, mode=0o700)
             (work / (path.stem + '_assets')).mkdir(parents=True)
             (work / path.name).write_bytes(data)
             job = {'id': job_id, 'record': identifier, 'filename': path.name, 'status': 'queued',
